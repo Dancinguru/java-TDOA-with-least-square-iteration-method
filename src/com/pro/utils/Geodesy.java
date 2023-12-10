@@ -74,55 +74,6 @@ public class Geodesy {
 
         return new double[]{lat * Constants.RTOD, lon * Constants.RTOD, alt};
     }
-
-    public static double[] getJacobOfAlt(double[] ecef) {
-        double x = ecef[0];
-        double y = ecef[1];
-        double z = ecef[2];
-
-        double p = Math.sqrt(x * x + y * y);
-        double th1 = WGS84_A * z;
-        double th2 = WGS84_B * p;
-        double th = Math.atan2(WGS84_A * z, WGS84_B * p);
-
-        double costh = Math.cos(th);
-        double sinth = Math.sin(th);
-
-        double roundTh = (-th1) * WGS84_B / ((th2 * th2 + th1 * th1) * p);
-        double roundzTh = th2 * WGS84_A / (th2 * th2 + th1 * th1);
-        double ep1 = z + _wgs84_ep2_b * sinth * sinth * sinth;
-        double ep2 = p - _wgs84_e2_a * costh * costh * costh;
-
-        double lat = Math.atan2(z + _wgs84_ep2_b * sinth * sinth * sinth,
-                p - _wgs84_e2_a * costh * costh * costh);
-
-        double coslat = Math.cos(lat);
-
-        double sinlat = Math.sin(lat);
-
-        double roundLatTermz = (ep2 * (1 + _wgs84_ep2_b * 3 * Math.pow(sinth, 2) * costh * roundzTh) - ep1 * _wgs84_e2_a * 3 * Math.pow(costh, 2) * sinth * roundzTh)/(Math.pow(ep2,2) + Math.pow(ep1,2)) ;
-        double roundLatTermx = (ep2 * (_wgs84_ep2_b * 3 * Math.pow(sinth, 2) * costh * x * roundTh) - ep1 * (x/p + _wgs84_e2_a * 3 * Math.pow(costh, 2) * sinth * roundTh * x))/(Math.pow(ep2,2) + Math.pow(ep1,2)) ;
-        double roundLatTermy = (ep2 * (_wgs84_ep2_b * 3 * Math.pow(sinth, 2) * costh * y * roundTh) - ep1 * (y/p + _wgs84_e2_a * 3 * Math.pow(costh, 2) * sinth * roundTh * y))/(Math.pow(ep2,2) + Math.pow(ep1,2)) * roundTh * y;
-
-        double roundx0 = x/(p * coslat) + (p / Math.pow(coslat, 2)) * sinlat *
-                roundLatTermx;
-
-        double roundy0 = y/(p * coslat) + (p / Math.pow(coslat, 2)) * sinlat *
-                roundLatTermy;
-
-        double roundz0 = (p / Math.pow(coslat, 2)) * sinlat * roundLatTermz;
-
-        double roundNTerm = WGS84_A * Math.pow((1-WGS84_ECC_SQ * sinlat * sinlat), -1.5) * WGS84_ECC_SQ * sinlat * coslat;
-
-        double roundx1 = roundNTerm * roundLatTermx;
-        double roundy1 = roundNTerm * roundLatTermy;
-        double roundz1 = roundNTerm * roundLatTermz;
-
-        double N = WGS84_A / Math.sqrt(1 - WGS84_ECC_SQ * sinlat * sinlat);
-
-        double[] jacob = new double[]{roundx0 - roundx1, roundy0 - roundy1, roundz0 - roundz1};
-        return new double[]{jacob[0], jacob[1], jacob[2]};
-    }
     public static double greatCircle(double[] p0, double[] p1) {
         // Returns a great-circle distance in metres between two LLH points,
         // _assuming spherical earth_ and _ignoring altitude_. Don't use this if you
